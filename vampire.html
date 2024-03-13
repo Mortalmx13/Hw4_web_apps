@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Vampire App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <style> 
+    body{
+      font-family: sans-serif;
+      align-items: center;
+    }
+    .btn {
+      background-color: rgb(76, 36, 51); 
+      color: white; 
+    }
+    .btn:hover{
+      color: rgb(161, 151, 155);
+    }
+    .btn.clicked{
+      color: white;
+    }
+    .table {
+      background-color: rgb(161, 151, 155);
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Vampire App</h2>
+  <div class="form-group">
+    <label for="logicSelect">Select Model Logic:</label>
+    <select class="form-control" id="logicSelect">
+      <option value="random">Random Guess</option>
+      <option value="threshold">Threshold Based Method</option>
+    </select>
+  </div>
+
+  <h3>Classmate Input</h3>
+  <p>When using the Random Guess logic, leave all fields blank and click the 'Add Classmate' button to add classmates for randomizing.</p>
+  <form id="classmateForm">
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input type="text" class="form-control" id="name" >
+    </div>
+    <div class="form-group">
+      <label for="shadow">Shadow (1=YES|0=NO):</label>
+      <input type="text" class="form-control" id="shadow" >
+    </div>
+    <div class="form-group">
+      <label for="garlic">Garlic (1=YES|0=NO):</label>
+      <input type="text" class="form-control" id="garlic" >
+    </div>
+    <div class="form-group">
+      <label for="complexion">Complexion:</label>
+      <select class="form-control" id="complexion">
+        <option value="pale">Pale</option>
+        <option value="brown">Brown</option>
+        <option value="olive">Olive</option>
+      </select>
+    </div>
+    <button type="button" class="btn" onclick="addClassmate()">Add Classmate</button>
+  </form>
+  <br>
+  <button class="btn" onclick="graphData()">Graph</button>
+
+  <div id="chart_div"></div>
+
+  <h3>Input Table</h3>
+  <table class="table" id="classTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Shadow</th>
+        <th>Garlic</th>
+        <th>Complexion</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+</div>
+
+<script>
+  var classmateData = [];
+
+  function addClassmate() {
+    var name = document.getElementById('name').value;
+    var shadow = document.getElementById('shadow').value;
+    var garlic = document.getElementById('garlic').value;
+    var complexion = document.getElementById('complexion').value;
+
+    
+
+    classmateData.push({ name, shadow, garlic, complexion });
+
+    var table = document.getElementById('classTable').getElementsByTagName('tbody')[0];
+    var row = table.insertRow(table.length);
+    row.insertCell(0).innerHTML = name;
+    row.insertCell(1).innerHTML = shadow;
+    row.insertCell(2).innerHTML = garlic;
+    row.insertCell(3).innerHTML = complexion;
+
+    document.getElementById('classmateForm').reset();
+    
+  }
+
+
+function graphData() {
+   if (classmateData.length === 0) {
+    alert('Please add at least one person.');
+    return;
+   }
+    var logic = document.getElementById('logicSelect').value;
+    
+    var numVampires = 0;
+
+    if (logic === 'threshold') {
+        classmateData.forEach(function(classmate) {
+            var score = 0;
+            score += (classmate.shadow === '0') ? 4 : 0;
+            score += (classmate.complexion === 'pale') ? 3 : 0;
+            score += (classmate.garlic === '0') ? 3 : 0;
+
+            if (score > 6) {
+                numVampires++;
+            }
+        });
+    } else if (logic === 'random') {
+        numVampires = classmateData.reduce((acc, cur) => acc + (Math.random() > 0.5 ? 1 : 0), 0);
+    }
+
+    var numHumans = classmateData.length - numVampires;
+
+    drawChart(numHumans, numVampires);
+}
+  function drawChart(numHumans, numVampires) {
+    google.charts.load('current', {'packages':['corechart']});
+    
+    google.charts.setOnLoadCallback(function() {
+      
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Type');
+      data.addColumn('number', 'Count');
+      data.addRows([
+        ['Humans', numHumans],
+        ['Vampires', numVampires]
+      ]);
+
+      var options = {'title':'Vampires vs. Humans', 'width':550, 'height':400, 'colors': ['rgb(76, 36, 51)', 'rgb(161, 151, 155)']};
+      var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+      chart.draw(data, options);
+    });
+  }
+</script>
+
+</body>
+</html>
